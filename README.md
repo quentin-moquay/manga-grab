@@ -5,15 +5,15 @@ This is a simple CLI program to grab manga from online scans.
 
 ## Usages
 	manga-grab.groovy ([options]) [url] [chapter_padding] [page_padding] [starting_chapter] [ending_chapter] [request_properties]
-__url__ : with _:chapter:_ for chapter index and _:page:_ for page index. Do Not provide HTTPS links. Only HTTP.
-__Chapter padding__ : Digit padding (1, 01, 001, etc.) 1 for 1, 2 for 01 and so on
-__Page padding__ : same logic as chapter padding
-__Starting chapter__ : Which chapter number to start
-__Ending chapter__ : Which chapter number to end
-__Request Properties__ : Each Headers you want to send to the downloading HTTP Request
+* __url__ : with _:chapter:_ for chapter index and _:page:_ for page index. Do Not provide HTTPS links. Only HTTP.
+* __Chapter padding__ : Digit padding (1, 01, 001, etc.) 1 for 1, 2 for 01 and so on
+* __Page padding__ : same logic as chapter padding
+* __Starting chapter__ : Which chapter number to start
+* __Ending chapter__ : Which chapter number to end
+* __Request Properties__ : Each Headers you want to send to the downloading HTTP Request
 ### Options
-__-h or --help__ : show usages
-__-z or --zip__ : zip each chapter
+* __-h or --help__ : show usages
+* __-z or --zip__ : zip each chapter
 
 ### Examples
 	manga-grab.groovy 'http://www.funmanga.com/uploads/chapters/15549/:chapter:/p_:page:.jpg' 1 5 0 0
