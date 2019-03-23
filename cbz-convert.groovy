@@ -28,7 +28,7 @@ class CbzConvert {
     }
 
     void close() {
-        println("Wrote ${title}.pdf")
+        println("Wrote ${title}.cbz")
     }
 
 }
