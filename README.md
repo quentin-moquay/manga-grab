@@ -13,7 +13,9 @@ This is a simple CLI program to grab manga from online scans.
 * __Request Properties__ : Each Headers you want to send to the downloading HTTP Request
 ### Options
 * __-h or --help__ : show usages
-* __-z or --zip__ : zip each chapter
+* __-n or --no-download__ : Only convert, no download
+* __-r {x} or --repack {x}__ : Repack each chapter to {x} pages (only with convert)
+* __-c {x} or --convert {x}__ : Convert to cbz/pdf
 
 ### Examples
 	manga-grab.groovy 'http://www.funmanga.com/uploads/chapters/15549/:chapter:/p_:page:.jpg' 1 5 0 0
