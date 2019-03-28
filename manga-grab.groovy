@@ -15,7 +15,7 @@ int ARG_CHAPTER_END = 4
 int ARGS_BEFORE_REQUEST_PROPERTY = 5
 
 String usage = "manga-grab.groovy ([options]) [url] [chapter_padding] [page_padding] [starting_chapter] [ending_chapter] [request_properties]\n"
-usage += "\tURL with :chapter: for chapter index and :page: for page index. Do Not provide HTTPS links. Only HTTP.\n"
+usage += "\tURL with :chapter: for chapter index and :page: for page index. You can also provide :ext: for trying (jpg,jpeg,png) Do Not provide HTTPS links. Only HTTP.\n"
 usage += "\tChapter padding : Digit padding (1, 01, 001, etc.) 1 for 1, 2 for 01 and so on\n"
 usage += "\tPage padding : same logic as chapter padding\n"
 usage += "\tStarting chapter : Which chapter number to start\n"
@@ -24,10 +24,11 @@ usage += "\tRequest Properties : Each Headers you want to send to the downloadin
 usage += "Options :\n\n"
 usage += "\t-h or --help : show usages\n\n"
 usage += "\t-n or --no-download : Only convert, no download\n\n"
+usage += "\t-s or --show-empty-dirs : indicates empty directories \n\n"
 usage += "\t-r {x} or --repack {x} : Repack each chapter to {x} pages (only with convert)\n\n"
 usage += "\t-c {x} or --convert {x} : Convert to cbz/pdf \n\n"
 usage += "Examples :\n\n"
-usage += "\tmanga-grab.groovy 'http://www.funmanga.com/uploads/chapters/15549/:chapter:/p_:page:.jpg' 1 5 0 0\n"
+usage += "\tmanga-grab.groovy 'http://www.funmanga.com/uploads/chapters/15549/:chapter:/p_:page:.:ext:' 1 5 0 0\n"
 usage += "\tmanga-grab.groovy 'http://images.mangafreak.net/mangas/prison_school/prison_school_:tome:/prison_school_:tome:_:page:.jpg' 1 1 1 1 'Cookie:__cfduid=d0a467a3dbccecddbb1dd9a95d24332191549719778;cf_clearance=af4a3c4d175e3ed83973a1923bfc70f96b44ca1e-1549808750-3600-150'\n"
 
 // Usages
@@ -36,6 +37,7 @@ def cli = new CliBuilder(usage: "")
 cli.with {
     h longOpt: 'help', 'Show usage information'
     n longOpt: 'no-download', 'no download'
+    s longOpt: 'show-empty-dirs', 'indicates empty directories'
     c(longOpt: 'convert', args: 1, argName: 'x', 'Convert to x format')
     r(longOpt: 'repack', args: 1, argName: 'x', 'Repack each chapter to x pages')
 }
@@ -83,25 +85,42 @@ class PadNumber {
     }
 }
 
+def extensions = ['jpg', 'jpeg', 'png', 'gif']
 /**
  * Closure for downloading pictures
  **/
 urlToFile = { u, filename ->
-    final URL url = new URL(u)
-    final URLConnection hc = url.openConnection()
-    hc.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:65.0) Gecko/20100101 Firefox/65.0")
-    if (args.size() > ARGS_BEFORE_REQUEST_PROPERTY) {
-        for (int i = ARGS_BEFORE_REQUEST_PROPERTY; i < args.size(); i++) {
-            def param = (args[i] as String).split(':', 2)
-            println "add $param to request"
-            hc.addRequestProperty(param[0], param[1])
+    boolean found = false
+    URLConnection hc
+    for (def currentExtension : extensions) {
+        final URL url = new URL(u.replaceAll(":ext:", currentExtension))
+        println url
+        hc = url.openConnection()
+        hc.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:65.0) Gecko/20100101 Firefox/65.0")
+        if (args.size() > ARGS_BEFORE_REQUEST_PROPERTY) {
+            for (int i = ARGS_BEFORE_REQUEST_PROPERTY; i < args.size(); i++) {
+                def param = (args[i] as String).split(':', 2)
+                println "add $param to request"
+                hc.addRequestProperty(param[0], param[1])
+            }
+        }
+        hc.connect()
+        if (hc.responseCode == 200) {
+            def file = new File(filename.replaceAll(":ext:", currentExtension)).newOutputStream()
+            file << hc.inputStream
+            file.close()
+            found = true
+            extensions = extensions - currentExtension
+            extensions.add(0, currentExtension)
+            return
+        } else {
+            print "${hc.responseCode}..."
         }
     }
-    def file = new File(filename).newOutputStream()
-    hc.connect()
-    if (hc.responseCode != 200) throw new FileNotFoundException("${hc.responseCode}")
-    file << hc.inputStream
-    file.close()
+    if (!found) {
+        println ""
+        throw new FileNotFoundException("${hc.responseCode}")
+    }
 }
 
 // MAIN
@@ -129,8 +148,7 @@ if (!options.n) {
         while (true) {
             try {
                 def dl = url.replaceAll(":chapter:", "$chapter").replaceAll(":page:", "$page")
-                println dl
-                urlToFile(dl, "$chapter/${page}.jpg")
+                urlToFile(dl, "$chapter/${page}.:ext:")
                 firstTime = true
             } catch (FileNotFoundException e) {
                 if (firstTime) {
@@ -145,6 +163,18 @@ if (!options.n) {
             page++
         }
         chapter++
+    }
+}
+
+if (options.s) {
+    new File(".").eachFileRecurse(groovy.io.FileType.DIRECTORIES) { dir ->
+        def pages = []
+        dir.eachFileRecurse(groovy.io.FileType.FILES) { pages << it }
+        if(pages.empty) {
+            println "path $dir is empty"
+        } else if(pages.size() < 5) {
+            println "path $dir is less than 5 pages"
+        }
     }
 }
 
