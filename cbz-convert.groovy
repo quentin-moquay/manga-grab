@@ -9,7 +9,7 @@ class CbzConvert {
     ZipFile zipFile
     ZipParameters parameters
 
-    void createFile(String title) {
+    void createFile(def title) {
         this.title = title
         this.zipFile = new ZipFile("${title}.cbz")
         this.parameters = new ZipParameters()

@@ -1,4 +1,4 @@
-@Grab(group='com.itextpdf', module='itextpdf', version='5.5.13')
+@Grab(group = 'com.itextpdf', module = 'itextpdf', version = '5.5.13')
 import com.itextpdf.text.*
 import com.itextpdf.text.pdf.*
 
@@ -7,7 +7,7 @@ class PdfConvert {
     String title
     Document document
 
-    void createFile(String title) {
+    void createFile(def title) {
         this.title = title
         this.document = new Document()
         PdfWriter.getInstance(document, new FileOutputStream("${title}.pdf"))
@@ -15,8 +15,13 @@ class PdfConvert {
     }
 
     void addFile(File file) {
+        println file
         Image img = Image.getInstance(file.toURL())
-        img.scaleToFit(PageSize.A4.width, PageSize.A4.height)
+
+        float scaler = ((PageSize.A4.width - document.leftMargin()
+                - document.rightMargin()) / img.getWidth()) * 100
+
+        img.scalePercent(scaler)
         document.add(img)
     }
 
