@@ -24,7 +24,7 @@ usage += "\tRequest Properties : Each Headers you want to send to the downloadin
 usage += "Options :\n\n"
 usage += "\t-h or --help : show usages\n\n"
 usage += "\t-n or --no-download : Only convert, no download\n\n"
-usage += "\t-s or --show-empty-dirs : indicates empty directories \n\n"
+usage += "\t-s {x} or --show-empty-dirs : indicates empty directories or less than {x} pages \n\n"
 usage += "\t-r {x} or --repack {x} : Repack each chapter to {x} pages (only with convert)\n\n"
 usage += "\t-c {x} or --convert {x} : Convert to cbz/pdf \n\n"
 usage += "Examples :\n\n"
@@ -38,6 +38,7 @@ cli.with {
     h longOpt: 'help', 'Show usage information'
     n longOpt: 'no-download', 'no download'
     s longOpt: 'show-empty-dirs', 'indicates empty directories'
+    s(longOpt: 'show-empty-dirs', args: 1, argName: 'x', 'show empty or less than {x} pages')
     c(longOpt: 'convert', args: 1, argName: 'x', 'Convert to x format')
     r(longOpt: 'repack', args: 1, argName: 'x', 'Repack each chapter to x pages')
 }
@@ -144,22 +145,33 @@ if (!options.n) {
         final File folder = new File("$chapter")
         folder.mkdir()
         def page = new PadNumber(pad: args[ARG_PAGE_PADDING] as int, value: 1)
-        boolean firstTime = true
+        int fail = 0
         while (true) {
-            try {
-                def dl = url.replaceAll(":chapter:", "$chapter").replaceAll(":page:", "$page")
-                urlToFile(dl, "$chapter/${page}.:ext:")
-                firstTime = true
-            } catch (FileNotFoundException e) {
-                if (firstTime) {
-                    // sometimes, on some websites, there is ad instead of page
-                    firstTime = false
-                } else {
-                    println e
-                    // twice nothing, there is nothing more on this chapter
-                    break
-                }
-            }
+          boolean alreadyExists =  false
+          def filename = "$chapter/${page}.:ext:"
+          for (def currentExtension : extensions) {
+              if (new File(filename.replaceAll(":ext:", currentExtension)).exists()) {
+                alreadyExists = true
+                fail = 0
+                break
+              }
+          }
+          if (!alreadyExists) {
+              try {
+                  def dl = url.replaceAll(":chapter:", "$chapter").replaceAll(":page:", "$page")
+                  urlToFile(dl, filename)
+                  fail = 0
+              } catch (FileNotFoundException e) {
+                  if (fail < 2) {
+                      // sometimes, on some websites, there is ad instead of page
+                      fail++
+                  } else {
+                      println e
+                      // twice nothing, there is nothing more on this chapter
+                      break
+                  }
+              }
+          }
             page++
         }
         chapter++
@@ -172,8 +184,8 @@ if (options.s) {
         dir.eachFileRecurse(groovy.io.FileType.FILES) { pages << it }
         if(pages.empty) {
             println "path $dir is empty"
-        } else if(pages.size() < 5) {
-            println "path $dir is less than 5 pages"
+        } else if(pages.size() < (options.s as int)) {
+            println "path $dir is less than ${options.s} pages"
         }
     }
 }
