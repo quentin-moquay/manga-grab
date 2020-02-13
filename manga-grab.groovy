@@ -31,7 +31,6 @@ usage += "\tRequest Properties : Each Headers you want to send to the downloadin
 usage += "Options :\n\n"
 usage += "\t-h or --help : show usages\n\n"
 usage += "\t-n or --no-download : Only convert, no download\n\n"
-usage += "\t-e or --show-empty-dirs : indicates empty directories \n\n"
 usage += "\t-e {x} or --show-empty-dirs : indicates empty directories or less than {x} pages \n\n"
 usage += "\t-r {x} or --repack {x} : Repack each chapter to {x} pages (only with convert)\n\n"
 usage += "\t-c {x} or --convert {x} : Convert to cbz/pdf \n\n"
@@ -222,7 +221,7 @@ if (options.e) {
         dir.eachFileRecurse(groovy.io.FileType.FILES) { pages << it }
         if(pages.empty) {
             println "path $dir is empty"
-        } else if(pages.size() < (options.s as int)) {
+        } else if(pages.size() < (options.e as int)) {
             println "path $dir is less than ${options.s} pages"
         }
     }
