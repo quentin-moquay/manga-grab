@@ -30,7 +30,9 @@ class MobiConvert {
     void close() {
         wrap.close()
 
-        Process process = "ebook-convert.exe temp-${title}.cbz ${title}.mobi --no-inline-toc --output-profile kindle_pw".execute()
+        def ex = (System.properties['os.name'].contains('Windows')) ? '.exe' : ''
+
+        Process process = "ebook-convert${ex} temp-${title}.cbz ${title}.mobi --no-inline-toc --output-profile kindle_pw".execute()
         def out = new StringBuffer()
         def err = new StringBuffer()
         process.consumeProcessOutput( out, err )
